@@ -94,7 +94,7 @@ public:
 
     void update(int speed = 100) {
 
-        JointAngles j = solveIK(targetX, targetY, targetZ);
+        JointAngles j = solveIK(targetX, targetY, targetZ, targetWrist);
 
         baseMotor.move_absolute(j.base * BASE_RATIO, speed);
         shoulderMotor.move_absolute(j.shoulder * SHOULDER_RATIO, speed);
@@ -109,7 +109,7 @@ private:
     pros::Motor& elbowMotor;
     pros::Motor& wristMotor;
 
-    JointAngles solveIK(double x, double y, double z) {
+    JointAngles solveIK(double x, double y, double z, double wrist) {
 
         JointAngles j;
 
@@ -169,8 +169,12 @@ private:
 
         /* ---------- Wrist compensation ---------- */
 
-        // Need to find correct algorithm
-        j.wrist = targetWrist - (j.shoulder + j.elbow);
+        double shoulderX = b * cos(targetAngle + A);
+        double shoulderY = b * sin(targetAngle + A);
+
+        double wristAngle = - std::atan2(x - shoulderX, y - shoulderY);
+
+        j.wrist = radToDeg(wristAngle) - wrist;
 
         return j;
     }
