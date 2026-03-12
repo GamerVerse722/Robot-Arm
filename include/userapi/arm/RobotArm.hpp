@@ -1,5 +1,6 @@
 #pragma once
 #include "pros/motors.hpp"
+#include <algorithm>
 #include <cmath>
 // #include <algorithm>
 
@@ -45,6 +46,9 @@ public:
     double Z_MIN = -90;
     double Z_MAX = 90;
 
+    double WRIST_MIN = -90;
+    double WRIST_MAX = 90;
+
     /* ---------------- Target Pose ---------------- */
 
     double targetX = 15;
@@ -69,10 +73,10 @@ public:
     /* ---------------- Pose update ---------------- */
 
     void setTarget(double x, double y, double z, double wristDeg) {
-        targetX = clamp(x, X_MIN, X_MAX);
-        targetY = clamp(y, Y_MIN, Y_MAX);
-        targetZ = clamp(z, Z_MIN, Z_MAX);
-        targetWrist = wristDeg;
+        targetX = std::clamp(x, X_MIN, X_MAX);
+        targetY = std::clamp(y, Y_MIN, Y_MAX);
+        targetZ = std::clamp(z, Z_MIN, Z_MAX);
+        targetWrist = std::clamp(wristDeg, WRIST_MIN, WRIST_MAX);
     }
 
     void adjustTarget(double dx, double dy, double dz) {
@@ -111,66 +115,64 @@ private:
 
         /* ---------- Base rotation ---------- */
 
-        j.base = radToDeg(std::atan2(y, x));
+        j.base = z;
 
         /* ---------- Planar distance ---------- */
 
-        double r = std::sqrt(x*x + y*y);
-
         double a = ELBOW_LENGTH;
         double b = SHOULDER_LENGTH;
+        double c = std::sqrt(x*x + y*y);
+
 
         double rMax = a + b;
         double rMin = std::fabs(a - b);
 
         /* ---------- Clamp unreachable targets ---------- */
 
-        if (r > rMax) {
-            double scale = rMax / r;
+        if (c > rMax) {
+            double scale = rMax / c;
             x *= scale;
             y *= scale;
-            r = rMax;
+            c = rMax;
         }
 
-        if (r < rMin) {
-            double scale = rMin / r;
+        if (c < rMin) {
+            double scale = rMin / c;
             x *= scale;
             y *= scale;
-            r = rMin;
+            c = rMin;
         }
-
-        double c = r;
 
         /* ---------- Law of Cosines ---------- */
 
         double cosA = (b*b + c*c - a*a) / (2*b*c);
+        double cosB = (c*c + a*a - b*b) / (2*a*c);
         double cosC = (a*a + b*b - c*c) / (2*a*b);
 
-        cosA = clamp(cosA, -1.0, 1.0);
-        cosC = clamp(cosC, -1.0, 1.0);
+        cosA = std::clamp(cosA, -1.0, 1.0);
+        cosB = std::clamp(cosB, -1.0, 1.0);
+        cosC = std::clamp(cosC, -1.0, 1.0);
 
         double A = std::acos(cosA);
+        double B = std::acos(cosB);
         double C = std::acos(cosC);
 
         /* ---------- Shoulder angle ---------- */
 
-        double targetAngle = std::atan2(z, r);
+        double targetAngle = std::atan2(x, y);
 
-        j.shoulder = radToDeg(targetAngle - A);
+        j.shoulder = radToDeg(targetAngle + A);
 
         /* ---------- Elbow angle ---------- */
 
-        j.elbow = radToDeg(M_PI - C);
+        j.elbow = radToDeg(C);
 
         /* ---------- Wrist compensation ---------- */
 
+        // Need to find correct algorithm
         j.wrist = targetWrist - (j.shoulder + j.elbow);
 
         return j;
-    }
-
-    double clamp(double v, double min, double max) {
-        return std::max(min, std::min(v, max));
     }
 
     double radToDeg(double r) {
