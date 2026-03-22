@@ -10,11 +10,11 @@
 namespace devices {
     pros::Controller master(pros::E_CONTROLLER_MASTER);
     
-    pros::Motor baseMotor(15);
-    pros::Motor shoulderMotor(16);
-    pros::Motor elbowMotor(-17);
-    pros::Motor wristMotor(-18);
-    pros::Motor clawMotor(19);
+    pros::Motor baseMotor(6);
+    pros::Motor shoulderMotor(-5);
+    pros::Motor elbowMotor(4);
+    pros::Motor wristMotor(-3);
+    pros::Motor clawMotor(2);
 
     RobotArm arm(baseMotor, shoulderMotor, elbowMotor, wristMotor);
 }
