@@ -89,18 +89,14 @@ void competition_initialize() {
 void opcontrol() {
 	lv_screen_load(ui::driver::driver_screen);
 	configuration::controls::button_handler.start();
-    const double speed = 0.005;
+    double speed = 10.0;
 
-    while(true) {
+    while (true) {
 
-        int lx = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X);
-        int ly = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+        int lx = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X) / 127.0;
+        int ly = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) / 127.0;
 
-        int rx = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
-
-        if(abs(lx) < 10) lx = 0;
-        if(abs(ly) < 10) ly = 0;
-        if(abs(rx) < 10) rx = 0;
+        int rx = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X) / 127.0;
 
         arm.adjustTarget(
             lx * speed,
@@ -108,7 +104,7 @@ void opcontrol() {
             rx * speed
         );
 
-        arm.update(75);
+        arm.update(35);
 
         pros::delay(20);
     }

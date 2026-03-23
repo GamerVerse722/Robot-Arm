@@ -13,7 +13,7 @@ namespace devices {
     pros::Motor baseMotor(6);
     pros::Motor shoulderMotor(-5);
     pros::Motor elbowMotor(4);
-    pros::Motor wristMotor(-3);
+    pros::Motor wristMotor(3);
     pros::Motor clawMotor(2);
 
     RobotArm arm(baseMotor, shoulderMotor, elbowMotor, wristMotor);

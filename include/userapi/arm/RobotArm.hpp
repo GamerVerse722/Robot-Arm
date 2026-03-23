@@ -37,24 +37,24 @@ public:
 
     /* ---------------- Workspace limits ---------------- */
 
-    double X_MIN = 1;
-    double X_MAX = 15;
+    double X_MIN = 1.0;
+    double X_MAX = 15.5;
 
-    double Y_MIN = -1;
-    double Y_MAX = 15;
+    double Y_MIN = -1.0;
+    double Y_MAX = 15.5;
 
-    double Z_MIN = -90;
-    double Z_MAX = 90;
+    double Z_MIN = -90.0;
+    double Z_MAX = 90.0;
 
-    double WRIST_MIN = -90;
-    double WRIST_MAX = 90;
+    double WRIST_MIN = -90.0;
+    double WRIST_MAX = 90.0;
 
     /* ---------------- Target Pose ---------------- */
 
-    double targetX = 15;
+    double targetX = 15.5;
     double targetY = 0;
     double targetZ = 0;
-    double targetWrist = 0;
+    double targetWrist = -90;
 
     struct JointAngles {
         double base;
@@ -76,7 +76,8 @@ public:
         targetX = std::clamp(x, X_MIN, X_MAX);
         targetY = std::clamp(y, Y_MIN, Y_MAX);
         targetZ = std::clamp(z, Z_MIN, Z_MAX);
-        targetWrist = std::clamp(wristDeg, WRIST_MIN, WRIST_MAX);
+        targetWrist = wristDeg;
+        // targetWrist = std::clamp(wristDeg, WRIST_MIN, WRIST_MAX);
     }
 
     void adjustTarget(double dx, double dy, double dz) {
