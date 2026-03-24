@@ -110,74 +110,41 @@ private:
     pros::Motor& elbowMotor;
     pros::Motor& wristMotor;
 
-    JointAngles solveIK(double x, double y, double z, double wrist) {
+    JointAngles solveIK(const double x, const double y, const double z, const double wrist) {
+        JointAngles joint_angles{};
 
-        JointAngles j;
+        // Join Base
+        joint_angles.base = z;
 
-        /* ---------- Base rotation ---------- */
+        // Side Length
+        constexpr double a = ELBOW_LENGTH;
+        constexpr double b = SHOULDER_LENGTH;
+        const double c = std::sqrt(x*x + y*y);
 
-        j.base = z;
+        // Cosine Law
+        const double A = std::acos(std::clamp(((b*b + c*c - a*a) / (2*b*c)), -1.0, 1.0));
+        const double B = std::acos(std::clamp(((c*c + a*a - b*b) / (2*a*c)), -1.0, 1.0));
+        const double C = std::acos(std::clamp(((a*a + b*b - c*c) / (2*a*b)), -1.0, 1.0));
 
-        /* ---------- Planar distance ---------- */
+        log.debug(std::format("A: {:.3f}", radToDeg(A)));
+        log.debug(std::format("B: {:.3f}", radToDeg(B)));
+        log.debug(std::format("C: {:.3f}", radToDeg(C)));
 
-        double a = ELBOW_LENGTH;
-        double b = SHOULDER_LENGTH;
-        double c = std::sqrt(x*x + y*y);
+        // Shoulder Angle
+        const double targetAngle = std::atan2(y,x);
+        joint_angles.shoulder = radToDeg(targetAngle + A);
 
+        // Elbow Angle
+        joint_angles.elbow = radToDeg(C);
 
-        double rMax = a + b;
-        double rMin = std::fabs(a - b);
+        // Wrist Angle
+        const double shoulderX = b * cos(targetAngle + A);
+        const double shoulderY = b * sin(targetAngle + A);
 
-        /* ---------- Clamp unreachable targets ---------- */
+        const double wristAngle = -std::atan2(y-shoulderY, x-shoulderX);
+        joint_angles.wrist = radToDeg(wristAngle) - wrist;
 
-        if (c > rMax) {
-            double scale = rMax / c;
-            x *= scale;
-            y *= scale;
-            c = rMax;
-        }
-
-        if (c < rMin) {
-            double scale = rMin / c;
-            x *= scale;
-            y *= scale;
-            c = rMin;
-        }
-
-        /* ---------- Law of Cosines ---------- */
-
-        double cosA = (b*b + c*c - a*a) / (2*b*c);
-        double cosB = (c*c + a*a - b*b) / (2*a*c);
-        double cosC = (a*a + b*b - c*c) / (2*a*b);
-
-        cosA = std::clamp(cosA, -1.0, 1.0);
-        cosB = std::clamp(cosB, -1.0, 1.0);
-        cosC = std::clamp(cosC, -1.0, 1.0);
-
-        double A = std::acos(cosA);
-        double B = std::acos(cosB);
-        double C = std::acos(cosC);
-
-        /* ---------- Shoulder angle ---------- */
-
-        double targetAngle = std::atan2(x, y);
-
-        j.shoulder = radToDeg(targetAngle + A);
-
-        /* ---------- Elbow angle ---------- */
-
-        j.elbow = radToDeg(C);
-
-        /* ---------- Wrist compensation ---------- */
-
-        double shoulderX = b * cos(targetAngle + A);
-        double shoulderY = b * sin(targetAngle + A);
-
-        double wristAngle = - std::atan2(x - shoulderX, y - shoulderY);
-
-        j.wrist = radToDeg(wristAngle) - wrist;
-
-        return j;
+        return joint_angles;
     }
 
     double radToDeg(double r) {
