@@ -49,6 +49,10 @@ public:
     double WRIST_MIN = -90.0;
     double WRIST_MAX = 90.0;
 
+    /* ---------------- Arm Speed ---------------- */
+
+    const int 
+
     /* ---------------- Target Pose ---------------- */
 
     double targetX = 15.5;
@@ -80,20 +84,36 @@ public:
         // targetWrist = std::clamp(wristDeg, WRIST_MIN, WRIST_MAX);
     }
 
-    void adjustTarget(double dx, double dy, double dz) {
-        setTarget(targetX + dx,
-                  targetY + dy,
-                  targetZ + dz,
-                  targetWrist);
+    void adjustTarget(double dx, double dy) {
+        setTarget(
+            targetX + dx,
+            targetY + dy,
+            targetZ,
+            targetWrist
+        );
     }
 
     void adjustWrist(double d) {
-        targetWrist += d;
+        setTarget(
+            targetX,
+            targetY,
+            targetZ,
+            targetWrist + d
+        );
+    }
+
+    void adjustBase(double dz) {
+        setTarget(
+            targetX,
+            targetY,
+            targetZ + dz,
+            targetWrist
+        );
     }
 
     /* ---------------- Main update ---------------- */
 
-    void update(int speed = 100) {
+    void update() {
 
         JointAngles j = solveIK(targetX, targetY, targetZ, targetWrist);
 

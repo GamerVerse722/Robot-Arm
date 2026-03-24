@@ -89,7 +89,7 @@ void competition_initialize() {
 void opcontrol() {
 	lv_screen_load(ui::driver::driver_screen);
 	configuration::controls::button_handler.start();
-    double speed = 10.0;
+    double speed = 0.1;
 
     while (true) {
 
@@ -100,8 +100,7 @@ void opcontrol() {
 
         arm.adjustTarget(
             lx * speed,
-            ly * speed,
-            rx * speed
+            ly * speed
         );
 
         arm.update(35);
