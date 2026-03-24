@@ -51,7 +51,8 @@ public:
 
     /* ---------------- Arm Speed ---------------- */
 
-    const int 
+    const int ARM_SPEED = 50;
+    const int BASE_SPEED = 75;
 
     /* ---------------- Target Pose ---------------- */
 
@@ -117,10 +118,10 @@ public:
 
         JointAngles j = solveIK(targetX, targetY, targetZ, targetWrist);
 
-        baseMotor.move_absolute(j.base * BASE_RATIO, speed);
-        shoulderMotor.move_absolute(j.shoulder * SHOULDER_RATIO, speed);
-        elbowMotor.move_absolute(j.elbow * ELBOW_RATIO, speed);
-        wristMotor.move_absolute(j.wrist * WRIST_RATIO, speed);
+        baseMotor.move_absolute(j.base * BASE_RATIO, BASE_SPEED);
+        shoulderMotor.move_absolute(j.shoulder * SHOULDER_RATIO, ARM_SPEED);
+        elbowMotor.move_absolute(j.elbow * ELBOW_RATIO, ARM_SPEED);
+        wristMotor.move_absolute(j.wrist * WRIST_RATIO, ARM_SPEED);
     }
 
 private:
