@@ -103,7 +103,7 @@ void opcontrol() {
             ly * speed
         );
 
-        arm.update(35);
+        arm.update();
 
         pros::delay(20);
     }
