@@ -89,22 +89,24 @@ void competition_initialize() {
 void opcontrol() {
 	lv_screen_load(ui::driver::driver_screen);
 	configuration::controls::button_handler.start();
-    double speed = 0.1;
+    double speed = 0.25;
 
     while (true) {
 
-        int lx = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X) / 127.0;
-        int ly = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) / 127.0;
+        int lx = -devices::master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X) / 127.0;
+        int ly = devices::master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) / 127.0;
 
-        int rx = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X) / 127.0;
+        int rx = devices::master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X) / 127.0;
 
         arm.adjustTarget(
             lx * speed,
             ly * speed
         );
 
+		arm.adjustBase(rx * 0.25);
+
         arm.update();
 
-        pros::delay(20);
+        pros::delay(10);
     }
 }

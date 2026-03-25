@@ -32,16 +32,25 @@ namespace ui::driver::debug {
             wristMotor.get_position() * (12.0/60.0));
 
         std::string controller_speed = std::format("LX: {:.2f}, LY: {:.2f}, RX: {:.2f}",
-            master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X) / 127.0 * 10.0,
-            master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) / 127.0 * 10.0,
-            master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X) / 127.0 * 10.0
+            devices::master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X) / 127.0 * 10.0,
+            devices::master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) / 127.0 * 10.0,
+            devices::master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X) / 127.0 * 10.0
+        );
+
+        RobotArm::JointAngles angles = arm.solveIK(arm.targetX, arm.targetY, arm.targetZ, arm.targetWrist);
+
+        std::string kinematics_angle = std::format("Shoulder: {:.2f}, Elbow: {:.2f}, Wrist: {:.2f}",
+            angles.shoulder,
+            angles.elbow,
+            angles.wrist
         );
         
-        lv_label_set_text(labelDebug, std::format("{}\n{}\n{}\n{}",
+        lv_label_set_text(labelDebug, std::format("{}\n{}\n{}\n{}\n{}",
             target_pos,
             motor_angles,
             motor_angles_scaled,
-            controller_speed
+            controller_speed,
+            kinematics_angle
         ).c_str());
     }
 }

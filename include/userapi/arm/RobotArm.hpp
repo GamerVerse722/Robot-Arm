@@ -1,8 +1,10 @@
 #pragma once
+
+#include "pros/adi.hpp"
+#include "pros/motors.h"
 #include "pros/motors.hpp"
 #include <algorithm>
 #include <cmath>
-// #include <algorithm>
 
 class RobotArm {
 
@@ -11,11 +13,13 @@ public:
     RobotArm(pros::Motor& base,
              pros::Motor& shoulder,
              pros::Motor& elbow,
-             pros::Motor& wrist)
+             pros::Motor& wrist,
+             pros::adi::Encoder encoder)
         : baseMotor(base),
           shoulderMotor(shoulder),
           elbowMotor(elbow),
-          wristMotor(wrist)
+          wristMotor(wrist),
+          shoulderEncoder(encoder)
     {
         baseMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
         shoulderMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
@@ -37,10 +41,10 @@ public:
 
     /* ---------------- Workspace limits ---------------- */
 
-    double X_MIN = 1.0;
+    double X_MIN = 0.0;
     double X_MAX = 15.5;
 
-    double Y_MIN = -1.0;
+    double Y_MIN = 0.0;
     double Y_MAX = 15.5;
 
     double Z_MIN = -90.0;
@@ -51,15 +55,15 @@ public:
 
     /* ---------------- Arm Speed ---------------- */
 
-    const int ARM_SPEED = 50;
+    const int ARM_SPEED = 75;
     const int BASE_SPEED = 75;
 
     /* ---------------- Target Pose ---------------- */
 
     double targetX = 15.5;
-    double targetY = 0;
-    double targetZ = 0;
-    double targetWrist = -90;
+    double targetY = 0.0;
+    double targetZ = 0.0;
+    double targetWrist = 0.0;
 
     struct JointAngles {
         double base;
@@ -73,6 +77,7 @@ public:
         shoulderMotor.tare_position();
         elbowMotor.tare_position();
         wristMotor.tare_position();
+        shoulderEncoder.reset();
     }
 
     /* ---------------- Pose update ---------------- */
@@ -119,17 +124,10 @@ public:
         JointAngles j = solveIK(targetX, targetY, targetZ, targetWrist);
 
         baseMotor.move_absolute(j.base * BASE_RATIO, BASE_SPEED);
-        shoulderMotor.move_absolute(j.shoulder * SHOULDER_RATIO, ARM_SPEED);
+        shoulderMotor.move_absolute(j.shoulder * SHOULDER_RATIO, 127);
         elbowMotor.move_absolute(j.elbow * ELBOW_RATIO, ARM_SPEED);
         wristMotor.move_absolute(j.wrist * WRIST_RATIO, ARM_SPEED);
     }
-
-private:
-
-    pros::Motor& baseMotor;
-    pros::Motor& shoulderMotor;
-    pros::Motor& elbowMotor;
-    pros::Motor& wristMotor;
 
     JointAngles solveIK(const double x, const double y, const double z, const double wrist) {
         JointAngles joint_angles{};
@@ -138,8 +136,8 @@ private:
         joint_angles.base = z;
 
         // Side Length
-        constexpr double a = ELBOW_LENGTH;
-        constexpr double b = SHOULDER_LENGTH;
+        const double a = ELBOW_LENGTH;
+        const double b = SHOULDER_LENGTH;
         const double c = std::sqrt(x*x + y*y);
 
         // Cosine Law
@@ -147,16 +145,12 @@ private:
         const double B = std::acos(std::clamp(((c*c + a*a - b*b) / (2*a*c)), -1.0, 1.0));
         const double C = std::acos(std::clamp(((a*a + b*b - c*c) / (2*a*b)), -1.0, 1.0));
 
-        log.debug(std::format("A: {:.3f}", radToDeg(A)));
-        log.debug(std::format("B: {:.3f}", radToDeg(B)));
-        log.debug(std::format("C: {:.3f}", radToDeg(C)));
-
         // Shoulder Angle
         const double targetAngle = std::atan2(y,x);
         joint_angles.shoulder = radToDeg(targetAngle + A);
 
         // Elbow Angle
-        joint_angles.elbow = radToDeg(C);
+        joint_angles.elbow = radToDeg(M_PI - C);
 
         // Wrist Angle
         const double shoulderX = b * cos(targetAngle + A);
@@ -167,6 +161,14 @@ private:
 
         return joint_angles;
     }
+
+private:
+
+    pros::Motor& baseMotor;
+    pros::Motor& shoulderMotor;
+    pros::Motor& elbowMotor;
+    pros::Motor& wristMotor;
+    pros::adi::Encoder shoulderEncoder;
 
     double radToDeg(double r) {
         return r * (180.0 / M_PI);
