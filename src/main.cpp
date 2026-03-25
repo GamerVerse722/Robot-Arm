@@ -99,7 +99,7 @@ void opcontrol() {
         int rx = devices::master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X) / 127.0;
 
         arm.adjustTarget(
-            lx * speed,
+            lx * (speed),
             ly * speed
         );
 
@@ -107,6 +107,6 @@ void opcontrol() {
 
         arm.update();
 
-        pros::delay(10);
+        pros::delay(20);
     }
 }

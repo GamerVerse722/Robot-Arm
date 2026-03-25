@@ -41,10 +41,10 @@ public:
 
     /* ---------------- Workspace limits ---------------- */
 
-    double X_MIN = 0.0;
+    double X_MIN = 3.0;
     double X_MAX = 15.5;
 
-    double Y_MIN = 0.0;
+    double Y_MIN = -1.0;
     double Y_MAX = 15.5;
 
     double Z_MIN = -90.0;
@@ -118,13 +118,36 @@ public:
     }
 
     /* ---------------- Main update ---------------- */
-
     void update() {
 
         JointAngles j = solveIK(targetX, targetY, targetZ, targetWrist);
 
+        // Base (still motor encoder)
         baseMotor.move_absolute(j.base * BASE_RATIO, BASE_SPEED);
-        shoulderMotor.move_absolute(j.shoulder * SHOULDER_RATIO, 127);
+
+        // --- SHOULDER (ADI ENCODER PID) ---
+        double currentShoulder = getShoulderAngle();
+        double error = j.shoulder * SHOULDER_RATIO - currentShoulder;
+
+        shoulder_integral += error;
+        shoulder_integral = std::clamp(shoulder_integral, -1000.0, 1000.0);
+
+        double derivative = error - shoulder_prev_error;
+        shoulder_prev_error = error;
+
+        double output = (shoulder_kP * error) +
+                        (shoulder_kI * shoulder_integral) +
+                        (shoulder_kD * derivative);
+
+        output = std::clamp(output, -100.0, 100.0);
+
+        if (fabs(error) < 1.0) {
+            shoulderMotor.move(0);
+        } else {
+            shoulderMotor.move(output);
+        }
+
+        // Other joints (still motor-based)
         elbowMotor.move_absolute(j.elbow * ELBOW_RATIO, ARM_SPEED);
         wristMotor.move_absolute(j.wrist * WRIST_RATIO, ARM_SPEED);
     }
@@ -163,14 +186,26 @@ public:
     }
 
 private:
-
     pros::Motor& baseMotor;
     pros::Motor& shoulderMotor;
     pros::Motor& elbowMotor;
     pros::Motor& wristMotor;
     pros::adi::Encoder shoulderEncoder;
 
+    double shoulder_kP = 1.2;
+    double shoulder_kI = 0.0;
+    double shoulder_kD = 0.1;
+
+    double shoulder_integral = 0;
+    double shoulder_prev_error = 0;
+
+    const double TICKS_PER_REV = 360.0;
+
     double radToDeg(double r) {
         return r * (180.0 / M_PI);
+    }
+
+    double getShoulderAngle() {
+        return (shoulderEncoder.get_value() / TICKS_PER_REV) * 360.0;
     }
 };

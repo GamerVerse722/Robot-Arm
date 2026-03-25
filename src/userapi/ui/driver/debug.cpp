@@ -32,9 +32,9 @@ namespace ui::driver::debug {
             wristMotor.get_position() * (12.0/60.0));
 
         std::string controller_speed = std::format("LX: {:.2f}, LY: {:.2f}, RX: {:.2f}",
-            devices::master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X) / 127.0 * 10.0,
-            devices::master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) / 127.0 * 10.0,
-            devices::master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X) / 127.0 * 10.0
+            devices::master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X) / 127.0 * 0.25,
+            devices::master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) / 127.0 * 0.25,
+            devices::master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X) / 127.0 * 0.25
         );
 
         RobotArm::JointAngles angles = arm.solveIK(arm.targetX, arm.targetY, arm.targetZ, arm.targetWrist);
