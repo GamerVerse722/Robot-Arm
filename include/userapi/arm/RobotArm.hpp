@@ -73,7 +73,7 @@ namespace arm {
 
         /* ---------------- Pose update ---------------- */
 
-        void setTarget(double x, double y, double z, double wristDeg) {
+        void setTarget(const double x, const double y, const double z, const double wristDeg) {
             using namespace arm::config;
             
             targetX = std::clamp(x, X_MIN, X_MAX);
@@ -83,7 +83,7 @@ namespace arm {
             // targetWrist = std::clamp(wristDeg, WRIST_MIN, WRIST_MAX);
         }
 
-        void adjustTarget(double dx, double dy) {
+        void adjustTarget(const double dx, const double dy) {
             using namespace arm::config;
 
             setTarget(
@@ -94,7 +94,7 @@ namespace arm {
             );
         }
 
-        void adjustWrist(double d) {
+        void adjustWrist(const double d) {
             using namespace arm::config;
 
             setTarget(
@@ -105,7 +105,7 @@ namespace arm {
             );
         }
 
-        void adjustBase(double dz) {
+        void adjustBase(const double dz) {
             using namespace arm::config;
             
             setTarget(
@@ -173,7 +173,7 @@ namespace arm {
         EncoderMotor& elbowMotor;
         EncoderMotor& wristMotor;
 
-        double radToDeg(double r) {
+        double radToDeg(const double r) {
             return r * (180.0 / M_PI);
         }
     };
