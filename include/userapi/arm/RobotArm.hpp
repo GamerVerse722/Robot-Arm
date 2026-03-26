@@ -86,7 +86,7 @@ public:
         double wrist;
     };
 
-    void calibrateVertical() {
+    void calibrate() {
         baseMotor.tare_position();
         shoulderMotor.tare_position();
         elbowMotor.tare_position();

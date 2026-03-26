@@ -3,7 +3,6 @@
 #include "gamers-forge/proslogger.hpp"
 
 #include "liblvgl/display/lv_display.h"
-// #include "pros/misc.hpp"
 #include "pros/misc.h"
 #include "pros/rtos.hpp"
 
@@ -29,7 +28,7 @@ void initialize() {
 	
 	configuration::controls::configure();
 
-	arm.calibrateVertical();
+	arm.calibrate();
 
 
 	// lv_screen_load(ui::autom::mode_selector::mode_screen);
@@ -103,7 +102,7 @@ void opcontrol() {
             ly * speed
         );
 
-		arm.adjustBase(rx * 0.25);
+		arm.adjustBase(rx * 0.5);
 
         arm.update();
 
