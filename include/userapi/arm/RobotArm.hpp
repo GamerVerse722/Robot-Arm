@@ -22,7 +22,7 @@ namespace arm::config {
 
     /* ---------------- Workspace limits ---------------- */
 
-    const double X_MIN = 3.0;
+    const double X_MIN = 6.0;
     const double X_MAX = 15.5;
 
     const double Y_MIN = -1.0;
