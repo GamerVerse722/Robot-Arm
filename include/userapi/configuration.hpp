@@ -4,7 +4,6 @@
 #include "arm/RobotArm.hpp"
 #include "gamers-forge/bmapper.hpp"
 
-#include "okapi/api/control/iterative/iterativePosPidController.hpp"
 #include "pros/adi.hpp"
 #include "pros/misc.hpp"
 #include "pros/motors.hpp"
@@ -26,7 +25,11 @@ namespace devices {
     inline ez::PID elbowPID{0.75, 0, 0.5, 0, "Elbow"};
     inline ez::PID wristPID{0.75, 0, 0.5, 0, "Wrist"};
 
-    inline RobotArm arm(baseMotor, shoulderMotor, elbowMotor, wristMotor, shoulderEncoder, elbowEncoder, elbowEncoder, shoulderPID, elbowPID, wristPID);
+    inline RobotArm arm(
+        baseMotor, 
+        shoulderMotor, elbowMotor, wristMotor, 
+        shoulderEncoder, elbowEncoder, elbowEncoder, 
+        shoulderPID, elbowPID, wristPID);
 }
 
 namespace configuration::controls {
