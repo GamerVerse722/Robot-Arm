@@ -1,8 +1,10 @@
 #pragma once
 
+#include "EZ-Template/PID.hpp"
 #include "pros/adi.hpp"
 #include "pros/motors.h"
 #include "pros/motors.hpp"
+
 #include <algorithm>
 #include <cmath>
 
@@ -10,16 +12,20 @@ class RobotArm {
 
 public:
 
-    RobotArm(pros::Motor& base,
-             pros::Motor& shoulder,
-             pros::Motor& elbow,
-             pros::Motor& wrist,
-             pros::adi::Encoder encoder)
-        : baseMotor(base),
-          shoulderMotor(shoulder),
-          elbowMotor(elbow),
-          wristMotor(wrist),
-          shoulderEncoder(encoder)
+    RobotArm(
+        pros::Motor& base,
+        pros::Motor& shoulder,
+        pros::Motor& elbow,
+        pros::Motor& wrist,
+        pros::adi::Encoder& encoder,
+        ez::PID& shoulderPID
+    ):
+        baseMotor(base),
+        shoulderMotor(shoulder),
+        elbowMotor(elbow),
+        wristMotor(wrist),
+        shoulderEncoder(encoder),
+        shoulderPID(shoulderPID)
     {
         baseMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
         shoulderMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
@@ -125,31 +131,20 @@ public:
         // Base (still motor encoder)
         baseMotor.move_absolute(j.base * BASE_RATIO, BASE_SPEED);
 
-        // --- SHOULDER (ADI ENCODER PID) ---
-        double currentShoulder = getShoulderAngle();
-        double error = j.shoulder * SHOULDER_RATIO - currentShoulder;
-
-        shoulder_integral += error;
-        shoulder_integral = std::clamp(shoulder_integral, -1000.0, 1000.0);
-
-        double derivative = error - shoulder_prev_error;
-        shoulder_prev_error = error;
-
-        double output = (shoulder_kP * error) +
-                        (shoulder_kI * shoulder_integral) +
-                        (shoulder_kD * derivative);
-
-        output = std::clamp(output, -100.0, 100.0);
-
-        if (fabs(error) < 1.0) {
-            shoulderMotor.move(0);
-        } else {
-            shoulderMotor.move(output);
-        }
+        // --- SHOULDER (Okapi PID + ADI encoder) ---
+        motorEncoder(j.shoulder * SHOULDER_RATIO, shoulderMotor, shoulderEncoder, shoulderPID);
 
         // Other joints (still motor-based)
         elbowMotor.move_absolute(j.elbow * ELBOW_RATIO, ARM_SPEED);
         wristMotor.move_absolute(j.wrist * WRIST_RATIO, ARM_SPEED);
+    }
+
+    void motorEncoder(double target, pros::Motor& motor, pros::adi::Encoder& encoder, ez::PID pid) {
+        pid.target_set(target);
+        double output = pid.compute(encoder.get_value());
+
+        output = std::clamp(output, -127.0, 127.0);
+        motor.move(output);
     }
 
     JointAngles solveIK(const double x, const double y, const double z, const double wrist) {
@@ -190,14 +185,10 @@ private:
     pros::Motor& shoulderMotor;
     pros::Motor& elbowMotor;
     pros::Motor& wristMotor;
-    pros::adi::Encoder shoulderEncoder;
 
-    double shoulder_kP = 1.2;
-    double shoulder_kI = 0.0;
-    double shoulder_kD = 0.1;
+    pros::adi::Encoder& shoulderEncoder;
 
-    double shoulder_integral = 0;
-    double shoulder_prev_error = 0;
+    ez::PID& shoulderPID;
 
     const double TICKS_PER_REV = 360.0;
 

@@ -1,8 +1,10 @@
 #pragma once
 
+#include "EZ-Template/PID.hpp"
 #include "arm/RobotArm.hpp"
 #include "gamers-forge/bmapper.hpp"
 
+#include "okapi/api/control/iterative/iterativePosPidController.hpp"
 #include "pros/adi.hpp"
 #include "pros/misc.hpp"
 #include "pros/motors.hpp"
@@ -18,7 +20,9 @@ namespace devices {
 
     inline pros::adi::Encoder shoulderEncoder('A', 'B', false);
 
-    inline RobotArm arm(baseMotor, shoulderMotor, elbowMotor, wristMotor, shoulderEncoder);
+    inline ez::PID shoulderPID{0.75, 0, 0.5, 0, "Lift"};
+
+    inline RobotArm arm(baseMotor, shoulderMotor, elbowMotor, wristMotor, shoulderEncoder, shoulderPID);
 }
 
 namespace configuration::controls {
