@@ -13,13 +13,13 @@ namespace configuration::controls {
         using pros::controller_digital_e_t;
 
         button_handler.bind(pros::E_CONTROLLER_DIGITAL_R1)
-            .onPress([] { devices::arm.adjustWrist(1.5); })
-            .onHold([] { devices::arm.adjustWrist(1.5); })
+            .onPress([] { devices::robotArm.adjustWrist(1.5); })
+            .onHold([] { devices::robotArm.adjustWrist(1.5); })
             .apply();
 
         button_handler.bind(pros::E_CONTROLLER_DIGITAL_R2)
-            .onPress([] { devices::arm.adjustWrist(-1.5); })
-            .onHold([] { devices::arm.adjustWrist(-1.5); })
+            .onPress([] { devices::robotArm.adjustWrist(-1.5); })
+            .onHold([] { devices::robotArm.adjustWrist(-1.5); })
             .apply();
 
         button_handler.bind(pros::E_CONTROLLER_DIGITAL_L1)

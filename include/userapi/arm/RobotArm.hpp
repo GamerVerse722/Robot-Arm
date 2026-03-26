@@ -1,46 +1,13 @@
 #pragma once
 
-#include "EZ-Template/PID.hpp"
-#include "pros/adi.hpp"
 #include "pros/motors.h"
 #include "pros/motors.hpp"
+#include "userapi/arm/EncoderMotor.hpp"
 
 #include <algorithm>
 #include <cmath>
 
-class RobotArm {
-
-public:
-
-    RobotArm(
-        pros::Motor& base,
-        pros::Motor& shoulder,
-        pros::Motor& elbow,
-        pros::Motor& wrist,
-        pros::adi::Encoder& shoulderEncoder,
-        pros::adi::Encoder& elbowEncoder,
-        pros::adi::Encoder& wristEncoder,
-        ez::PID& shoulderPID,
-        ez::PID& elbowPID,
-        ez::PID& wristPID
-    ):
-        baseMotor(base),
-        shoulderMotor(shoulder),
-        elbowMotor(elbow),
-        wristMotor(wrist),
-        shoulderEncoder(shoulderEncoder),
-        elbowEncoder(elbowEncoder),
-        wristEncoder(wristEncoder),
-        shoulderPID(shoulderPID),
-        elbowPID(elbowPID),
-        wristPID(wristPID)
-    {
-        baseMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-        shoulderMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-        elbowMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-        wristMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-    }
-
+namespace arm::config {
     /* ---------------- Geometry ---------------- */
 
     const double SHOULDER_LENGTH = 7.0;
@@ -55,160 +22,159 @@ public:
 
     /* ---------------- Workspace limits ---------------- */
 
-    double X_MIN = 3.0;
-    double X_MAX = 15.5;
+    const double X_MIN = 3.0;
+    const double X_MAX = 15.5;
 
-    double Y_MIN = -1.0;
-    double Y_MAX = 15.5;
+    const double Y_MIN = -1.0;
+    const double Y_MAX = 15.5;
 
-    double Z_MIN = -90.0;
-    double Z_MAX = 90.0;
+    const double Z_MIN = -90.0;
+    const double Z_MAX = 90.0;
 
-    double WRIST_MIN = -90.0;
-    double WRIST_MAX = 90.0;
+    const double WRIST_MIN = -90.0;
+    const double WRIST_MAX = 90.0;
+}
 
-    /* ---------------- Arm Speed ---------------- */
+namespace arm {
+    class RobotArm {
+    public:
+        RobotArm(
+            pros::Motor& base,
+            EncoderMotor& shoulderMotor,
+            EncoderMotor& elbowMotor,
+            EncoderMotor& wristMotor
+        ):
+            baseMotor(base),
+            shoulderMotor(shoulderMotor),
+            elbowMotor(elbowMotor),
+            wristMotor(wristMotor)
+        {}
 
-    const int ARM_SPEED = 75;
-    const int BASE_SPEED = 75;
+        double targetX = 15.5;
+        double targetY = 0.0;
+        double targetZ = 0.0;
+        double targetWrist = 0.0;
 
-    /* ---------------- Target Pose ---------------- */
+        struct JointAngles {
+            double base;
+            double shoulder;
+            double elbow;
+            double wrist;
+        };
 
-    double targetX = 15.5;
-    double targetY = 0.0;
-    double targetZ = 0.0;
-    double targetWrist = 0.0;
+        void calibrate() {
+            baseMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+            baseMotor.tare_position();
 
-    struct JointAngles {
-        double base;
-        double shoulder;
-        double elbow;
-        double wrist;
+            shoulderMotor.calibrate();
+            elbowMotor.calibrate();
+            wristMotor.calibrate();
+        }
+
+        /* ---------------- Pose update ---------------- */
+
+        void setTarget(double x, double y, double z, double wristDeg) {
+            using namespace arm::config;
+            
+            targetX = std::clamp(x, X_MIN, X_MAX);
+            targetY = std::clamp(y, Y_MIN, Y_MAX);
+            targetZ = std::clamp(z, Z_MIN, Z_MAX);
+            targetWrist = wristDeg;
+            // targetWrist = std::clamp(wristDeg, WRIST_MIN, WRIST_MAX);
+        }
+
+        void adjustTarget(double dx, double dy) {
+            using namespace arm::config;
+
+            setTarget(
+                targetX + dx,
+                targetY + dy,
+                targetZ,
+                targetWrist
+            );
+        }
+
+        void adjustWrist(double d) {
+            using namespace arm::config;
+
+            setTarget(
+                targetX,
+                targetY,
+                targetZ,
+                targetWrist + d
+            );
+        }
+
+        void adjustBase(double dz) {
+            using namespace arm::config;
+            
+            setTarget(
+                targetX,
+                targetY,
+                targetZ + dz,
+                targetWrist
+            );
+        }
+
+        /* ---------------- Main update ---------------- */
+        void update() {
+            using namespace arm::config;
+
+            JointAngles j = solveIK(targetX, targetY, targetZ, targetWrist);
+
+            // Base (still motor encoder)
+            baseMotor.move_absolute(j.base * BASE_RATIO, 100);
+
+            // --- SHOULDER (Okapi PID + ADI encoder) ---
+            shoulderMotor.move(j.shoulder * SHOULDER_RATIO);
+            elbowMotor.move(j.elbow * ELBOW_RATIO);
+            wristMotor.move(j.wrist * WRIST_RATIO);
+        }
+
+        JointAngles solveIK(const double x, const double y, const double z, const double wrist) {
+            using namespace arm::config;
+
+            JointAngles joint_angles{};
+
+            // Join Base
+            joint_angles.base = z;
+
+            // Side Length
+            const double a = ELBOW_LENGTH;
+            const double b = SHOULDER_LENGTH;
+            const double c = std::sqrt(x*x + y*y);
+
+            // Cosine Law
+            const double A = std::acos(std::clamp(((b*b + c*c - a*a) / (2*b*c)), -1.0, 1.0));
+            const double B = std::acos(std::clamp(((c*c + a*a - b*b) / (2*a*c)), -1.0, 1.0));
+            const double C = std::acos(std::clamp(((a*a + b*b - c*c) / (2*a*b)), -1.0, 1.0));
+
+            // Shoulder Angle
+            const double targetAngle = std::atan2(y,x);
+            joint_angles.shoulder = radToDeg(targetAngle + A);
+
+            // Elbow Angle
+            joint_angles.elbow = radToDeg(M_PI - C);
+
+            // Wrist Angle
+            const double shoulderX = b * cos(targetAngle + A);
+            const double shoulderY = b * sin(targetAngle + A);
+
+            const double wristAngle = -std::atan2(y-shoulderY, x-shoulderX);
+            joint_angles.wrist = radToDeg(wristAngle) - wrist;
+
+            return joint_angles;
+        }
+
+    private:
+        pros::Motor& baseMotor;
+
+        EncoderMotor& shoulderMotor;
+        EncoderMotor& elbowMotor;
+        EncoderMotor& wristMotor;
+
+        double radToDeg(double r) {
+            return r * (180.0 / M_PI);
+        }
     };
-
-    void calibrate() {
-        baseMotor.tare_position();
-        shoulderMotor.tare_position();
-        elbowMotor.tare_position();
-        wristMotor.tare_position();
-
-        shoulderEncoder.reset();
-    }
-
-    /* ---------------- Pose update ---------------- */
-
-    void setTarget(double x, double y, double z, double wristDeg) {
-        targetX = std::clamp(x, X_MIN, X_MAX);
-        targetY = std::clamp(y, Y_MIN, Y_MAX);
-        targetZ = std::clamp(z, Z_MIN, Z_MAX);
-        targetWrist = wristDeg;
-        // targetWrist = std::clamp(wristDeg, WRIST_MIN, WRIST_MAX);
-    }
-
-    void adjustTarget(double dx, double dy) {
-        setTarget(
-            targetX + dx,
-            targetY + dy,
-            targetZ,
-            targetWrist
-        );
-    }
-
-    void adjustWrist(double d) {
-        setTarget(
-            targetX,
-            targetY,
-            targetZ,
-            targetWrist + d
-        );
-    }
-
-    void adjustBase(double dz) {
-        setTarget(
-            targetX,
-            targetY,
-            targetZ + dz,
-            targetWrist
-        );
-    }
-
-    /* ---------------- Main update ---------------- */
-    void update() {
-
-        JointAngles j = solveIK(targetX, targetY, targetZ, targetWrist);
-
-        // Base (still motor encoder)
-        baseMotor.move_absolute(j.base * BASE_RATIO, BASE_SPEED);
-
-        // --- SHOULDER (Okapi PID + ADI encoder) ---
-        motorEncoder(j.shoulder * SHOULDER_RATIO, shoulderMotor, shoulderEncoder, shoulderPID);
-        motorEncoder(j.elbow * ELBOW_RATIO, elbowMotor, elbowEncoder, elbowPID);
-        motorEncoder(j.wrist * WRIST_RATIO, wristMotor, wristEncoder, wristPID);
-    }
-
-    void motorEncoder(double target, pros::Motor& motor, pros::adi::Encoder& encoder, ez::PID pid) {
-        pid.target_set(target);
-        double output = pid.compute(encoder.get_value());
-
-        output = std::clamp(output, -127.0, 127.0);
-        motor.move(output);
-    }
-
-    JointAngles solveIK(const double x, const double y, const double z, const double wrist) {
-        JointAngles joint_angles{};
-
-        // Join Base
-        joint_angles.base = z;
-
-        // Side Length
-        const double a = ELBOW_LENGTH;
-        const double b = SHOULDER_LENGTH;
-        const double c = std::sqrt(x*x + y*y);
-
-        // Cosine Law
-        const double A = std::acos(std::clamp(((b*b + c*c - a*a) / (2*b*c)), -1.0, 1.0));
-        const double B = std::acos(std::clamp(((c*c + a*a - b*b) / (2*a*c)), -1.0, 1.0));
-        const double C = std::acos(std::clamp(((a*a + b*b - c*c) / (2*a*b)), -1.0, 1.0));
-
-        // Shoulder Angle
-        const double targetAngle = std::atan2(y,x);
-        joint_angles.shoulder = radToDeg(targetAngle + A);
-
-        // Elbow Angle
-        joint_angles.elbow = radToDeg(M_PI - C);
-
-        // Wrist Angle
-        const double shoulderX = b * cos(targetAngle + A);
-        const double shoulderY = b * sin(targetAngle + A);
-
-        const double wristAngle = -std::atan2(y-shoulderY, x-shoulderX);
-        joint_angles.wrist = radToDeg(wristAngle) - wrist;
-
-        return joint_angles;
-    }
-
-private:
-    pros::Motor& baseMotor;
-    pros::Motor& shoulderMotor;
-    pros::Motor& elbowMotor;
-    pros::Motor& wristMotor;
-
-    pros::adi::Encoder& shoulderEncoder;
-    pros::adi::Encoder& elbowEncoder;
-    pros::adi::Encoder& wristEncoder;
-
-    ez::PID& shoulderPID;
-    ez::PID& elbowPID;
-    ez::PID& wristPID;
-    
-
-    const double TICKS_PER_REV = 360.0;
-
-    double radToDeg(double r) {
-        return r * (180.0 / M_PI);
-    }
-
-    double getShoulderAngle() {
-        return (shoulderEncoder.get_value() / TICKS_PER_REV) * 360.0;
-    }
-};
+}

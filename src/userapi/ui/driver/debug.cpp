@@ -16,10 +16,10 @@ namespace ui::driver::debug {
     void debug_timer(lv_timer_t* timer) {
         using namespace devices;
         std::string target_pos = std::format("X: {:.2f}, Y: {:.2f}, Z: {:.2f}, Wrist: {:.2f}",
-            arm.targetX,
-            arm.targetY,
-            arm.targetZ,
-            arm.targetWrist);
+            robotArm.targetX,
+            robotArm.targetY,
+            robotArm.targetZ,
+            robotArm.targetWrist);
 
         std::string motor_angles = std::format("Sholder: {:.2f}, Elbow: {:.2f}, Wrist: {:.2f}",
             shoulderMotor.get_position(),
@@ -37,7 +37,7 @@ namespace ui::driver::debug {
             devices::master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X) / 127.0 * 0.25
         );
 
-        RobotArm::JointAngles angles = arm.solveIK(arm.targetX, arm.targetY, arm.targetZ, arm.targetWrist);
+        arm::RobotArm::JointAngles angles = robotArm.solveIK(robotArm.targetX, robotArm.targetY, robotArm.targetZ, robotArm.targetWrist);
 
         std::string kinematics_angle = std::format("Shoulder: {:.2f}, Elbow: {:.2f}, Wrist: {:.2f}",
             angles.shoulder,

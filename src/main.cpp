@@ -12,7 +12,6 @@
 
 
 using namespace devices;
-
 /**
  * Runs initialization code. This occurs as soon as the program is started.
  *
@@ -27,9 +26,6 @@ void initialize() {
 	ui::driver::initialize();
 	
 	configuration::controls::configure();
-
-	arm.calibrate();
-
 
 	// lv_screen_load(ui::autom::mode_selector::mode_screen);
 }
@@ -97,14 +93,14 @@ void opcontrol() {
 
         int rx = devices::master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X) / 127.0;
 
-        arm.adjustTarget(
+        robotArm.adjustTarget(
             lx * (speed),
             ly * speed
         );
 
-		arm.adjustBase(rx * 0.5);
+		robotArm.adjustBase(rx * 0.5);
 
-        arm.update();
+        robotArm.update();
 
         pros::delay(20);
     }
