@@ -19,10 +19,14 @@ namespace devices {
     inline pros::Motor clawMotor(2, pros::MotorGearset::green);
 
     inline pros::adi::Encoder shoulderEncoder('A', 'B', false);
+    inline pros::adi::Encoder elbowEncoder('C', 'D', false);
+    inline pros::adi::Encoder wristEncoder('E', 'F', false);
 
-    inline ez::PID shoulderPID{0.75, 0, 0.5, 0, "Lift"};
+    inline ez::PID shoulderPID{0.75, 0, 0.5, 0, "Shoulder"};
+    inline ez::PID elbowPID{0.75, 0, 0.5, 0, "Elbow"};
+    inline ez::PID wristPID{0.75, 0, 0.5, 0, "Wrist"};
 
-    inline RobotArm arm(baseMotor, shoulderMotor, elbowMotor, wristMotor, shoulderEncoder, shoulderPID);
+    inline RobotArm arm(baseMotor, shoulderMotor, elbowMotor, wristMotor, shoulderEncoder, elbowEncoder, elbowEncoder, shoulderPID, elbowPID, wristPID);
 }
 
 namespace configuration::controls {

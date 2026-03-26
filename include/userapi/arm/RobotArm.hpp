@@ -17,15 +17,23 @@ public:
         pros::Motor& shoulder,
         pros::Motor& elbow,
         pros::Motor& wrist,
-        pros::adi::Encoder& encoder,
-        ez::PID& shoulderPID
+        pros::adi::Encoder& shoulderEncoder,
+        pros::adi::Encoder& elbowEncoder,
+        pros::adi::Encoder& wristEncoder,
+        ez::PID& shoulderPID,
+        ez::PID& elbowPID,
+        ez::PID& wristPID
     ):
         baseMotor(base),
         shoulderMotor(shoulder),
         elbowMotor(elbow),
         wristMotor(wrist),
-        shoulderEncoder(encoder),
-        shoulderPID(shoulderPID)
+        shoulderEncoder(shoulderEncoder),
+        elbowEncoder(elbowEncoder),
+        wristEncoder(wristEncoder),
+        shoulderPID(shoulderPID),
+        elbowPID(elbowPID),
+        wristPID(wristPID)
     {
         baseMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
         shoulderMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
@@ -83,6 +91,7 @@ public:
         shoulderMotor.tare_position();
         elbowMotor.tare_position();
         wristMotor.tare_position();
+
         shoulderEncoder.reset();
     }
 
@@ -133,10 +142,8 @@ public:
 
         // --- SHOULDER (Okapi PID + ADI encoder) ---
         motorEncoder(j.shoulder * SHOULDER_RATIO, shoulderMotor, shoulderEncoder, shoulderPID);
-
-        // Other joints (still motor-based)
-        elbowMotor.move_absolute(j.elbow * ELBOW_RATIO, ARM_SPEED);
-        wristMotor.move_absolute(j.wrist * WRIST_RATIO, ARM_SPEED);
+        motorEncoder(j.elbow * ELBOW_RATIO, elbowMotor, elbowEncoder, elbowPID);
+        motorEncoder(j.wrist * WRIST_RATIO, wristMotor, wristEncoder, wristPID);
     }
 
     void motorEncoder(double target, pros::Motor& motor, pros::adi::Encoder& encoder, ez::PID pid) {
@@ -187,8 +194,13 @@ private:
     pros::Motor& wristMotor;
 
     pros::adi::Encoder& shoulderEncoder;
+    pros::adi::Encoder& elbowEncoder;
+    pros::adi::Encoder& wristEncoder;
 
     ez::PID& shoulderPID;
+    ez::PID& elbowPID;
+    ez::PID& wristPID;
+    
 
     const double TICKS_PER_REV = 360.0;
 
