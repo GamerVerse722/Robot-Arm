@@ -22,7 +22,7 @@ namespace arm::config {
 
     /* ---------------- Workspace limits ---------------- */
 
-    const double X_MIN = 6.0;
+    const double X_MIN = 5.0;
     const double X_MAX = 15.5;
 
     const double Y_MIN = -1.0;
@@ -123,7 +123,7 @@ namespace arm {
             JointAngles j = solveIK(targetX, targetY, targetZ, targetWrist);
 
             // Base (still motor encoder)
-            baseMotor.move_absolute(j.base * BASE_RATIO, 100);
+            baseMotor.move_absolute(j.base * BASE_RATIO, 127);
 
             // --- SHOULDER (Okapi PID + ADI encoder) ---
             shoulderMotor.move(j.shoulder * SHOULDER_RATIO);

@@ -19,8 +19,8 @@ namespace devices {
     inline pros::Motor clawMotor     (2,  pros::MotorGearset::green);
     
     inline pros::adi::Encoder shoulderEncoder ('A', 'B', false);
-    inline pros::adi::Encoder elbowEncoder    ('C', 'D', false);
-    inline pros::adi::Encoder wristEncoder    ('E', 'F', false);
+    inline pros::adi::Encoder elbowEncoder    ('C', 'D', true);
+    inline pros::adi::Encoder wristEncoder    ('E', 'F', true);
 
     inline ez::PID shoulderPID {0.75, 0, 0.5, 0, "Shoulder"};
     inline ez::PID elbowPID    {0.75, 0, 0.5, 0, "Elbow"};

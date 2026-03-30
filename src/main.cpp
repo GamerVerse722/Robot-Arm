@@ -98,7 +98,7 @@ void opcontrol() {
             ly * speed
         );
 
-		robotArm.adjustBase(rx * 0.5);
+		robotArm.adjustBase(rx * 1.0);
 
         robotArm.update();
 
