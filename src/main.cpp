@@ -84,14 +84,15 @@ void competition_initialize() {
 void opcontrol() {
 	lv_screen_load(ui::driver::driver_screen);
 	configuration::controls::button_handler.start();
-    double speed = 0.25;
+    double speed = 0.25 / 2.0;
 
     while (true) {
 
-        int lx = -devices::master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X) / 127.0;
+        int lx = devices::master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X) / 127.0;
         int ly = devices::master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) / 127.0;
 
         int rx = devices::master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X) / 127.0;
+		int ry = devices::master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y) / 127.0;
 
         robotArm.adjustTarget(
             lx * (speed),
@@ -99,9 +100,10 @@ void opcontrol() {
         );
 
 		robotArm.adjustBase(rx * 1.0);
+		robotArm.adjustWrist(ry);
 
         robotArm.update();
 
-        pros::delay(20);
+        pros::delay(10);
     }
 }

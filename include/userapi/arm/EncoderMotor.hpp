@@ -27,7 +27,7 @@ public:
         pid.target_set(target);
         double output = pid.compute(encoder.get_value());
 
-        output = std::clamp(output, -127.0, 127.0);
+        output = std::clamp(output, min, max);
         motor.move(output);
     }
 

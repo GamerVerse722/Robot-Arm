@@ -22,9 +22,9 @@ namespace devices {
     inline pros::adi::Encoder elbowEncoder    ('C', 'D', true);
     inline pros::adi::Encoder wristEncoder    ('E', 'F', true);
 
-    inline ez::PID shoulderPID {0.75, 0, 0.5, 0, "Shoulder"};
-    inline ez::PID elbowPID    {0.75, 0, 0.5, 0, "Elbow"};
-    inline ez::PID wristPID    {0.75, 0, 0.5, 0, "Wrist"};
+    inline ez::PID shoulderPID {0.5, 0, 1, 0, "Shoulder"};
+    inline ez::PID elbowPID    {0.75, 0, 1, 0, "Elbow"};
+    inline ez::PID wristPID    {1.0, 0, 0.75, 0, "Wrist"};
 
     inline EncoderMotor shoulderEM {shoulderMotor, shoulderEncoder, shoulderPID};
     inline EncoderMotor elbowEM    {elbowMotor,    elbowEncoder,    elbowPID};

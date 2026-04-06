@@ -73,14 +73,31 @@ namespace arm {
 
         /* ---------------- Pose update ---------------- */
 
-        void setTarget(const double x, const double y, const double z, const double wristDeg) {
+        void setTarget(double x, double y, double z, double wristDeg) {
             using namespace arm::config;
-            
+
+            double distance = std::sqrt(x*x + y*y);
+            const double maxReach = SHOULDER_LENGTH + ELBOW_LENGTH - 0.1;
+            const double minReach = std::abs(SHOULDER_LENGTH - ELBOW_LENGTH);
+
+            if (distance < 1e-6) distance = 1e-6;
+
+            double scale = 1.0;
+
+            if (distance > maxReach) {
+                scale = maxReach / distance;
+            } else if (distance < minReach) {
+                scale = minReach / distance;
+            }
+
+            x *= scale;
+            y *= scale;
+
             targetX = std::clamp(x, X_MIN, X_MAX);
             targetY = std::clamp(y, Y_MIN, Y_MAX);
+
             targetZ = std::clamp(z, Z_MIN, Z_MAX);
             targetWrist = wristDeg;
-            // targetWrist = std::clamp(wristDeg, WRIST_MIN, WRIST_MAX);
         }
 
         void adjustTarget(const double dx, const double dy) {
