@@ -22,13 +22,14 @@ namespace devices {
     inline pros::adi::Encoder elbowEncoder    ('C', 'D', true);
     inline pros::adi::Encoder wristEncoder    ('E', 'F', true);
 
-    inline ez::PID shoulderPID {0.5, 0, 1, 0, "Shoulder"};
-    inline ez::PID elbowPID    {0.75, 0, 1, 0, "Elbow"};
-    inline ez::PID wristPID    {1.0, 0, 0.75, 0, "Wrist"};
+    inline ez::PID shoulderPID      {0.5, 0, 1, 0, "Shoulder"};
+    inline ez::PID elbowPID         {0.5, 0, 1, 0, "Elbow"};
+    inline ez::PID elbowNegativePID {0.5, 0, 2, 0, "ElbowNegative"};
+    inline ez::PID wristPID         {1.0, 0, 0.75, 0, "Wrist"};
 
-    inline EncoderMotor shoulderEM {shoulderMotor, shoulderEncoder, shoulderPID};
-    inline EncoderMotor elbowEM    {elbowMotor,    elbowEncoder,    elbowPID};
-    inline EncoderMotor wristEM    {wristMotor,    wristEncoder,    wristPID};
+    inline EncoderMotor shoulderEM {shoulderMotor, shoulderEncoder,     shoulderPID};
+    inline EncoderMotor elbowEM    {elbowMotor,    elbowEncoder,    elbowPID, elbowNegativePID};
+    inline EncoderMotor wristEM    {wristMotor,    wristEncoder,        wristPID};
 
     inline arm::RobotArm robotArm(
         baseMotor,
