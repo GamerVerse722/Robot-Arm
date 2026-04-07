@@ -1,12 +1,9 @@
 #pragma once
 
 #include "EZ-Template/PID.hpp"
-#include "gamers-forge/proslogger.hpp"
 #include "pros/adi.hpp"
 #include "pros/motors.h"
 #include "pros/motors.hpp"
-
-static PROSLogger::Logger logger{"EncoderMotor"};
 
 class EncoderMotor {
 public:
@@ -47,7 +44,6 @@ public:
         ez::PID* active_pid = &pid;
 
         if (has_negative_pid && error > 0) {
-            logger.debug("Negative");
             active_pid = &pid_neg;
         }
 

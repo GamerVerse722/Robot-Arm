@@ -24,7 +24,7 @@ namespace devices {
 
     inline ez::PID shoulderPID      {0.5, 0, 1, 0, "Shoulder"};
     inline ez::PID elbowPID         {0.5, 0, 1, 0, "Elbow"};
-    inline ez::PID elbowNegativePID {0.5, 0, 2, 0, "ElbowNegative"};
+    inline ez::PID elbowNegativePID {0.3, 0, 2, 0, "ElbowNegative"};
     inline ez::PID wristPID         {1.0, 0, 0.75, 0, "Wrist"};
 
     inline EncoderMotor shoulderEM {shoulderMotor, shoulderEncoder,     shoulderPID};
