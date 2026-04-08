@@ -10,6 +10,18 @@
 #include "userapi/ui/autom/mode_selector.hpp"
 #include "userapi/ui/op_control.hpp"
 
+double driveCurveExpo(double input, double deadzone, double gain) {
+    if (std::abs(input) < deadzone) return 0;
+
+    double sign = input > 0 ? 1 : -1;
+    double x = (std::abs(input) - deadzone) / (127 - deadzone);
+
+    // Exponential curve
+    double curved = (std::exp(gain * x) - 1) / (std::exp(gain) - 1);
+
+    return sign * curved * 127;
+}
+
 
 using namespace devices;
 /**
@@ -84,22 +96,31 @@ void competition_initialize() {
 void opcontrol() {
 	lv_screen_load(ui::driver::driver_screen);
 	configuration::controls::button_handler.start();
+
     double speed = 0.25 / 2.0;
+	double deadzone = 20;
 
     while (true) {
 
-        int lx = devices::master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X) / 127.0;
-        int ly = devices::master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) / 127.0;
+        double lx = devices::master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X);
+        double ly = devices::master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
 
-        int rx = devices::master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X) / 127.0;
-		int ry = devices::master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y) / 127.0;
+        double rx = devices::master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+		double ry = -devices::master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y);
+
+
+		lx = driveCurveExpo(lx, deadzone, 1.2) / 127.0;
+		ly = driveCurveExpo(ly, deadzone, 1.2) / 127.0;
+		rx = driveCurveExpo(rx, deadzone, 1.2) / 127.0;
+		ry = driveCurveExpo(ry, deadzone, 1.2) / 127.0;
 
         robotArm.adjustTarget(
             lx * (speed),
             ly * speed
         );
 
-		robotArm.adjustBase(rx * 1.0);
+		devices::baseMotor.move(rx * 25.0);
+		// robotArm.adjustBase(rx * 1.0);
 		robotArm.adjustWrist(ry);
 
         robotArm.update();

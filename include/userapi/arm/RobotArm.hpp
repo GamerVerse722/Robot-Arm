@@ -140,7 +140,7 @@ namespace arm {
             JointAngles j = solveIK(targetX, targetY, targetZ, targetWrist);
 
             // Base (still motor encoder)
-            baseMotor.move_absolute(j.base * BASE_RATIO, 127);
+            // baseMotor.move_absolute(j.base * BASE_RATIO, 127);
 
             // --- SHOULDER (Okapi PID + ADI encoder) ---
             shoulderMotor.move(j.shoulder * SHOULDER_RATIO);
